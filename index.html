@@ -24,11 +24,22 @@
     --global: #6366F1; --pacific: #A78BFA; --southasia: #F97316;
     --promo: #10B981; --follow: #F59E0B; --avoid: #EF4444;
   }
+  /* Infinite Grid Background */
+  .grid-bg{position:fixed;inset:0;z-index:-2;pointer-events:none;overflow:hidden}
+  .grid-layer{position:absolute;inset:-40px;width:calc(100% + 80px);height:calc(100% + 80px);color:var(--text3);opacity:.04}
+  .grid-layer.highlight{opacity:.25;transition:none}
+  .grid-pattern{width:100%;height:100%}
+  .grid-glow{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+  .grid-glow .orb{position:absolute;border-radius:50%;filter:blur(120px)}
+  .grid-glow .orb-orange{right:-15%;top:-15%;width:35%;height:35%;background:rgba(249,115,22,.12)}
+  .grid-glow .orb-primary{right:8%;top:-8%;width:18%;height:18%;background:rgba(236,72,153,.08)}
+  .grid-glow .orb-blue{left:-8%;bottom:-15%;width:35%;height:35%;background:rgba(59,130,246,.1)}
+
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:'Helvetica Neue',Helvetica,Arial,'PingFang SC','Noto Sans SC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
   /* Layout */
-  .app{display:flex;max-width:1400px;margin:0 auto;min-height:100vh}
+  .app{display:flex;max-width:1400px;margin:0 auto;min-height:100vh;position:relative}
   .sidebar{width:260px;background:var(--surface);border-right:1px solid var(--border);padding:32px 24px;position:sticky;top:0;height:100vh;overflow-y:auto;flex-shrink:0}
   .main{flex:1;padding:40px 48px;min-width:0}
 
@@ -227,6 +238,21 @@
 </style>
 </head>
 <body>
+<!-- Infinite Grid Background -->
+<div class="grid-bg">
+  <div class="grid-layer" id="gridBase">
+    <svg class="grid-pattern" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="gp-base" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(#gp-base)"/></svg>
+  </div>
+  <div class="grid-layer highlight" id="gridHighlight">
+    <svg class="grid-pattern" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="gp-hl" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(#gp-hl)"/></svg>
+  </div>
+</div>
+<div class="grid-glow">
+  <div class="orb orb-orange"></div>
+  <div class="orb orb-primary"></div>
+  <div class="orb orb-blue"></div>
+</div>
+
 <div class="app">
   <!-- Sidebar -->
   <div class="sidebar">
@@ -372,6 +398,33 @@
 </div>
 
 <script>
+// ---- Infinite Grid Animation ----
+(function(){
+  let gOx=0,gOy=0,raf;
+  const base=document.getElementById('gridBase');
+  const hl=document.getElementById('gridHighlight');
+  const gpBase=document.getElementById('gp-base');
+  const gpHl=document.getElementById('gp-hl');
+  if(!base||!hl)return;
+  const speed=0.3;
+  function tick(){
+    gOx=(gOx+speed)%40;gOy=(gOy+speed)%40;
+    if(gpBase){gpBase.setAttribute('x',gOx);gpBase.setAttribute('y',gOy)}
+    if(gpHl){gpHl.setAttribute('x',gOx);gpHl.setAttribute('y',gOy)}
+    raf=requestAnimationFrame(tick);
+  }
+  tick();
+  // Mouse-follow radial highlight
+  let mx=0,my=0,curMx=0,curMy=0;
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
+  function followTick(){
+    curMx+=(mx-curMx)*.08;curMy+=(my-curMy)*.08;
+    const mask=`radial-gradient(300px circle at ${curMx}px ${curMy}px, black, transparent)`;
+    hl.style.webkitMaskImage=mask;hl.style.maskImage=mask;
+    requestAnimationFrame(followTick);
+  }
+  followTick();
+})();
 // ---- 硬编码中文 ----
 const regionNames={SEA:'东南亚',MENA:'中东',LATAM:'拉美',Africa:'非洲',Europe:'欧洲',Asia:'亚洲','North America':'北美',Global:'全球',Pacific:'太平洋',SouthAsia:'南亚'};
 const categoryNames={promo:'商业促销',cultural:'文化传统',social:'社会议题',entertainment:'娱乐流行',industry:'行业活动',national:'国家公共',religious:'宗教节日'};
